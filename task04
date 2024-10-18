@@ -1,0 +1,207 @@
+Project Structure
+
+/chat-app
+   /public
+       index.html
+       styles.css
+       client.js
+   /server.js
+   /package.json
+
+
+---
+
+2. Setup Dependencies (Node.js)
+
+1. Create a new project folder and initialize it as a Node.js project.
+
+mkdir chat-app
+cd chat-app
+npm init -y
+
+
+2. Install the necessary dependencies.
+
+npm install express ws
+
+
+
+
+---
+
+3. Backend (server.js)
+
+In server.js, you'll create a WebSocket server and serve the HTML files.
+
+// server.js
+const express = require('express');
+const http = require('http');
+const WebSocket = require('ws');
+
+// Create an express app
+const app = express();
+const server = http.createServer(app);
+
+// WebSocket server
+const wss = new WebSocket.Server({ server });
+
+// Serve static files from 'public' folder
+app.use(express.static('public'));
+
+// Listen for WebSocket connections
+wss.on('connection', ws => {
+    console.log('New client connected');
+
+    // When a message is received from a client
+    ws.on('message', message => {
+        console.log(Received: ${message});
+
+        // Broadcast the message to all clients
+        wss.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(message);
+            }
+        });
+    });
+
+    // When the connection is closed
+    ws.on('close', () => {
+        console.log('Client disconnected');
+    });
+});
+
+// Start the server on port 3000
+server.listen(3000, () => {
+    console.log('Server is listening on http://localhost:3000');
+});
+
+#This code sets up a WebSocket server on top of an HTTP server and serves the frontend files. When a message is received, it is broadcasted to all connected clients.
+
+
+---
+
+4. Frontend (HTML + CSS + JavaScript)
+
+HTML (index.html)
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Chat App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="chat-container">
+        <h1>WebSocket Chat</h1>
+        <div id="chat-window">
+            <div id="output"></div>
+        </div>
+        <input id="username" type="text" placeholder="Enter your name">
+        <input id="message" type="text" placeholder="Type a message">
+        <button id="send-btn">Send</button>
+    </div>
+
+    <script src="client.js"></script>
+</body>
+</html>
+
+
+---
+
+CSS (styles.css)
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+.chat-container {
+    width: 100%;
+    max-width: 500px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+h1 {
+    margin-bottom: 20px;
+}
+
+#chat-window {
+    height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #fafafa;
+}
+
+#output {
+    font-size: 14px;
+}
+
+input, button {
+    padding: 10px;
+    margin: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+    background-color: #333;
+    color: #fff;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #555;
+}
+
+
+---
+
+JavaScript (client.js)
+
+// Connect to WebSocket server
+const socket = new WebSocket('ws://localhost:3000');
+
+const output = document.getElementById('output');
+const messageInput = document.getElementById('message');
+const usernameInput = document.getElementById('username');
+const sendBtn = document.getElementById('send-btn');
+
+// When a message is received from the server
+socket.onmessage = (event) => {
+    const message = event.data;
+    output.innerHTML += <p>${message}</p>;
+};
+
+// Send a message when the user clicks the "Send" button
+sendBtn.addEventListener('click', () => {
+    const message = ${usernameInput.value}: ${messageInput.value};
+    socket.send(message);
+    messageInput.value = ''; // Clear the message input
+});
+
+
+---
+
+5. Running the App
+
+1. Start the Node.js server.
+
+node server.js
+
+#Open your browser and navigate to http://localhost:3000. Open the page in multiple tabs to simulate different users. You can now chat in real time between the different tabs.
